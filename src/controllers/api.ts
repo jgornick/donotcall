@@ -6,7 +6,6 @@ import twilio from 'twilio';
 
 import { IncomingMessage } from '../models/incoming-message';
 import { Complaint } from '../models/complaint';
-import { submitComplaint } from '../util/submit-complaint';
 
 /**
  * POST /
@@ -23,8 +22,8 @@ export const postApi = async (req: Request, res: Response) => {
   console.log('submissionNumbers', inspect(submissionNumbers));
 
   await Promise.all(map(submissionNumbers, (number) => {
-    const submission = Complaint.fromIncomingMessage(incomingMessage, number);
-    return submitComplaint(browser, submission);
+    const complaint = Complaint.fromIncomingMessage(incomingMessage, number);
+    return complaint.submit(browser);
   }));
 
   await browser.close();

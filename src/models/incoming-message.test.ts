@@ -1,4 +1,4 @@
-import { PhoneNumberUtil, PhoneNumber } from 'google-libphonenumber';
+import { PhoneNumberUtil } from 'google-libphonenumber';
 
 import mockAxios from 'jest-mock-axios';
 
@@ -76,8 +76,6 @@ END:VCARD
 `;
 
 describe('IncomingMessage', () => {
-  let incomingMessage: IncomingMessage;
-
   afterEach(() => {
     mockAxios.reset();
   });
