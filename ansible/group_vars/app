@@ -1,0 +1,9 @@
+---
+nodejs_version: "10.x"
+nodejs_install_npm_user: "root"
+
+param_app_path: "/opt/donotcall"
+
+param_app_http_port: 8006
+
+param_app_environment: production

@@ -1,0 +1,128 @@
+---
+- hosts: app
+  become: yes
+
+  roles:
+    - role: geerlingguy.nodejs
+
+  tasks:
+    - name: Install system dependencies
+      apt:
+        name: "{{ packages }}"
+      vars:
+        packages:
+          - gconf-service
+          - libasound2
+          - libatk1.0-0
+          - libatk-bridge2.0-0
+          - libc6
+          - libcairo2
+          - libcups2
+          - libdbus-1-3
+          - libexpat1
+          - libfontconfig1
+          - libgcc1
+          - libgconf-2-4
+          - libgdk-pixbuf2.0-0
+          - libglib2.0-0
+          - libgtk-3-0
+          - libnspr4
+          - libpango-1.0-0
+          - libpangocairo-1.0-0
+          - libstdc++6
+          - libx11-6
+          - libx11-xcb1
+          - libxcb1
+          - libxcomposite1
+          - libxcursor1
+          - libxdamage1
+          - libxext6
+          - libxfixes3
+          - libxi6
+          - libxrandr2
+          - libxrender1
+          - libxss1
+          - libxtst6
+          - ca-certificates
+          - fonts-liberation
+          - libappindicator1
+          - libnss3
+          - lsb-release
+          - xdg-utils
+          - wget
+
+    - name: Create application directory
+      file:
+        path: "{{ param_app_path }}"
+        state: directory
+        owner: root
+        group: www-data
+        mode: 0755
+        recurse: yes
+
+    - name: Create application node modules directory
+      file:
+        path: "{{ param_app_path }}/node_modules"
+        state: directory
+        owner: root
+        group: www-data
+        mode: 0774
+        recurse: yes
+
+    - name: Create application log directory
+      file:
+        path: "/var/log/donotcall"
+        state: directory
+        owner: root
+        group: www-data
+        mode: 0755
+        recurse: yes
+
+    - name: Build production code
+      command: npm run build
+      delegate_to: localhost
+      become: no
+      tags:
+        - update
+
+    - name: Copy dist to server
+      copy:
+        src: "{{ playbook_dir }}/../{{ item }}"
+        dest: "{{ param_app_path }}"
+        mode: 0744
+        owner: root
+        group: www-data
+      with_items:
+        - dist
+        - package.json
+      tags:
+        - update
+
+    - name: Install application dependencies
+      npm:
+        path: "{{ param_app_path }}"
+        production: yes
+      become: no
+      tags:
+        - update
+
+    - name: Install application service
+      template:
+        src: templates/donotcall.service
+        dest: /etc/systemd/system/donotcall.service
+        owner: root
+        group: root
+
+    - name: Setup application service
+      systemd:
+        daemon_reload: yes
+        name: donotcall.service
+        enabled: yes
+        state: started
+
+    - name: Restart application service
+      systemd:
+        name: donotcall.service
+        state: restarted
+      tags:
+        - update

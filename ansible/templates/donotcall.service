@@ -1,0 +1,18 @@
+[Unit]
+Description=donotcall
+Requires=network-online.target local-fs.target
+
+[Service]
+WorkingDirectory={{ param_app_path }}
+ExecStart=/usr/bin/env node {{ param_app_path }}/dist/server.js
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=donotcall
+User=root
+Group=www-data
+Environment=NODE_ENV={{ param_app_environment }}
+Environment=PORT={{ param_app_http_port }}
+
+[Install]
+WantedBy=multi-user.target
