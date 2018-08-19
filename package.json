@@ -4,24 +4,25 @@
   "description": "A starting point for Node.js express apps with TypeScript",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Microsoft/TypeScript-Node-Starter"
+    "url": "https://github.com/jgornick/donotcall"
   },
-  "author": "Bowden Kelly",
+  "author": "Joe Gornick",
   "license": "MIT",
   "scripts": {
-    "start": "npm run serve",
     "build": "npm run build-ts && npm run tslint",
-    "serve": "node dist/server.js",
-    "watch-node": "nodemon dist/server.js",
-    "watch": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"npm run watch-ts\" \"npm run watch-node\"",
-    "test": "jest --forceExit --coverage --verbose",
-    "watch-test": "npm run test -- --watchAll",
     "build-ts": "tsc",
-    "watch-ts": "tsc -w",
-    "tslint": "tslint -c tslint.json -p tsconfig.json",
     "debug": "npm run build && npm run watch-debug",
+    "deploy": "ANSIBLE_CONFIG=ansible/ansible.cfg ansible-playbook ansible/app.yml -i ansible/hosts -t update",
+    "serve": "node dist/server.js",
     "serve-debug": "nodemon --inspect dist/server.js",
-    "watch-debug": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"npm run watch-ts\" \"npm run serve-debug\""
+    "start": "npm run serve",
+    "test": "jest --forceExit --coverage --verbose",
+    "tslint": "tslint -c tslint.json -p tsconfig.json",
+    "watch": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"npm run watch-ts\" \"npm run watch-node\"",
+    "watch-debug": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"npm run watch-ts\" \"npm run serve-debug\"",
+    "watch-node": "nodemon dist/server.js",
+    "watch-test": "npm run test -- --watchAll",
+    "watch-ts": "tsc -w"
   },
   "dependencies": {
     "axios": "^0.18.0",
@@ -38,10 +39,9 @@
     "twilio": "^3.19.1",
     "type-is": "^1.6.16",
     "vcard-js": "^1.2.2",
-    "winston": "^2.4.2"
+    "winston": "^3.0.0"
   },
   "devDependencies": {
-    "@types/axios": "^0.14.0",
     "@types/body-parser": "^1.17.0",
     "@types/compression": "^0.0.36",
     "@types/dotenv": "^4.0.3",
