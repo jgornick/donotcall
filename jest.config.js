@@ -10,10 +10,10 @@ module.exports = {
     'json'
   ],
   transform: {
-    '^.+\\.(ts|tsx)$': './node_modules/ts-jest/preprocessor.js'
+    '^.+\\.(ts|tsx)$': 'ts-jest'
   },
   testMatch: [
-    '**/*.test.(ts|js)'
+    '**/*.test.ts',
   ],
   testEnvironment: 'node'
 };
