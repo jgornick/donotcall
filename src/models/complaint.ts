@@ -31,45 +31,42 @@ export class Complaint {
   public async submit(browser: Browser) {
     let waitForNavigation = Promise.resolve<Response>(undefined);
     const waitForNavigationOptions: NavigationOptions = { waitUntil: 'networkidle2' };
-
     const page = await browser.newPage();
-    await page.goto(DO_NOT_CALL_FORM_URL, waitForNavigationOptions);
 
-    await page.pdf({ path: `${this.number.getNationalNumber()}-step0.pdf` });
+    await page.goto(DO_NOT_CALL_FORM_URL, waitForNavigationOptions);
     waitForNavigation = page.waitForNavigation(waitForNavigationOptions);
     await page.click('input[type="submit"]');
     await waitForNavigation;
-
-    console.log('step1');
 
     await page.type('#PhoneTextBox', String(this.fromNumber.getNationalNumber()));
     await page.type('#DateOfCallTextBox', this.date.format('MM/DD/YYYY'));
     await page.select('#TimeOfCallDropDownList', this.date.format('HH'));
     await page.select('#ddlMinutes', this.date.format('mm'));
-    await page.click('#PrerecordMessageYESRadioButton');
     await page.click('#PhoneCallRadioButton');
-    await page.pdf({ path: `${this.number.getNationalNumber()}-step1.pdf` });
     waitForNavigation = page.waitForNavigation(waitForNavigationOptions);
     await page.click('input[type="submit"]');
     await waitForNavigation;
-
-    console.log('step2');
 
     await page.type('#CallerPhoneNumberTextBox', String(this.number.getNationalNumber()));
     await page.type('#CityTextBox', this.fromCity);
     await page.select('#StateDropDownList', this.fromState);
     await page.type('#ZipCodeTextBox', this.fromZip);
     await page.type('#CommentTextBox', 'Submitted via donotcall.tel');
-    await page.pdf({ path: `${this.number.getNationalNumber()}-step2.pdf` });
     // waitForNavigation = page.waitForNavigation(waitForNavigationOptions);
     // await page.click('input[type="submit"]');
     // await waitForNavigation;
 
-    console.log('step3');
+    if (await page.$('#StepTwoAcceptedPanel') === null) {
+      console.log('unable to verify');
+      let pdfPath  = `/var/log/donotcall`;
+      pdfPath += `/${this.number.getNationalNumber()}`;
+      pdfPath += `-${this.fromNumber.getNationalNumber()}`;
+      pdfPath += `-${this.date.unix()}.pdf`;
 
-    // verify Your Complaint Has Been Accepted
-
-    await page.pdf({ path: `${this.number.getNationalNumber()}-step3.pdf` });
+      await page.pdf({ path: pdfPath });
+      await page.close();
+      throw new Error('Unable to confirm submission!');
+    }
 
     return await page.close();
   }
