@@ -11,7 +11,7 @@ import { Complaint } from '../models/complaint';
  * POST /
  */
 export const postApi = async (req: Request, res: Response) => {
-  logger.info('REQ', req.body);
+  logger.info('REQ', req);
   const incomingMessage = IncomingMessage.fromJSON(req.body);
 
   logger.info('incomingMessage', incomingMessage);

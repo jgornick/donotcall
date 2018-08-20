@@ -57,7 +57,6 @@ export class Complaint {
     // await waitForNavigation;
 
     if (await page.$('#StepTwoAcceptedPanel') === null) {
-      console.log('unable to verify');
       let pdfPath  = `/var/log/donotcall`;
       pdfPath += `/${this.number.getNationalNumber()}`;
       pdfPath += `-${this.fromNumber.getNationalNumber()}`;
