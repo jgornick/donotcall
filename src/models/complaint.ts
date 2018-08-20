@@ -52,9 +52,9 @@ export class Complaint {
     await page.select('#StateDropDownList', this.fromState);
     await page.type('#ZipCodeTextBox', this.fromZip);
     await page.type('#CommentTextBox', 'Submitted via donotcall.tel');
-    // waitForNavigation = page.waitForNavigation(waitForNavigationOptions);
-    // await page.click('input[type="submit"]');
-    // await waitForNavigation;
+    waitForNavigation = page.waitForNavigation(waitForNavigationOptions);
+    await page.click('input[type="submit"]');
+    await waitForNavigation;
 
     if (await page.$('#StepTwoAcceptedPanel') === null) {
       let pdfPath  = `/var/log/donotcall`;
