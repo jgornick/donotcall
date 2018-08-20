@@ -1,12 +1,13 @@
 {
   "name": "donotcall",
   "version": "0.1.0",
-  "description": "A starting point for Node.js express apps with TypeScript",
+  "description": "File complaints to National Do Not Call Registry via text messages.",
+  "homepage": "https://donotcall.tel",
   "repository": {
     "type": "git",
     "url": "https://github.com/jgornick/donotcall"
   },
-  "author": "Joe Gornick",
+  "author": "Joe Gornick <joe@joegornick.com> (https://joegornick.com)",
   "license": "MIT",
   "scripts": {
     "build": "npm run build-ts && npm run tslint",
