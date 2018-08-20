@@ -13,7 +13,7 @@
     "build": "npm run build-ts && npm run tslint",
     "build-ts": "tsc",
     "debug": "npm run build && npm run watch-debug",
-    "deploy": "ANSIBLE_CONFIG=ansible/ansible.cfg ansible-playbook ansible/app.yml -i ansible/hosts -t update",
+    "deploy": "ANSIBLE_CONFIG=ansible/ansible.cfg ansible-playbook ansible/app.yml -i ansible/hosts",
     "serve": "node dist/server.js",
     "serve-debug": "nodemon --inspect dist/server.js",
     "start": "npm run serve",

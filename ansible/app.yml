@@ -85,18 +85,16 @@
       tags:
         - update
 
-    - name: Copy dist to server
-      copy:
-        src: "{{ playbook_dir }}/../{{ item }}"
+    - name: Sync dist to server
+      synchronize:
+        src: "{{ ((playbook_dir + '/../') | realpath) + '/' }}"
         dest: "{{ param_app_path }}"
-        mode: 0744
-        owner: root
-        group: www-data
-      with_items:
-        - dist
-        - package.json
+        owner: no
+        group: no
+        perms: no
       tags:
         - update
+        - sync
 
     - name: Install application dependencies
       npm:
@@ -105,6 +103,7 @@
       become: no
       tags:
         - update
+        - sync
 
     - name: Install application service
       template:
@@ -126,3 +125,4 @@
         state: restarted
       tags:
         - update
+        - sync
