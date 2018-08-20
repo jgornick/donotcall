@@ -159,3 +159,5 @@ dist/**/*
 # Ignore ansible galaxy files
 ansible/galaxy
 
+.python-version
+.ruby-version
