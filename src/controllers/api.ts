@@ -11,6 +11,10 @@ import { Complaint } from '../models/complaint';
  * POST /
  */
 export const postApi = async (req: Request, res: Response) => {
+  if (twilio.validateExpressRequest(req, process.env.TWILIO_AUTH_TOKEN) === false) {
+    return res.sendStatus(400);
+  }
+
   logger.info('REQ', req.body);
   const incomingMessage = IncomingMessage.fromJSON(req.body);
 

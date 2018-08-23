@@ -6,7 +6,7 @@ import dotenv from 'dotenv';
 
 import * as apiController from './controllers/api';
 
-dotenv.config({ path: '.env.example' });
+dotenv.config({ path: '.env' });
 
 const app = express();
 
@@ -16,7 +16,6 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(lusca.xframe('SAMEORIGIN'));
 app.use(lusca.xssProtection(true));
-
 
 /**
  * Primary app routes.
