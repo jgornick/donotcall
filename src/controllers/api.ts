@@ -18,6 +18,12 @@ export const postApi = async (req: Request, res: Response) => {
   logger.info('REQ', req.body);
   const incomingMessage = IncomingMessage.fromJSON(req.body);
 
+  if (incomingMessage.from.getCountryCode() !== 1) {
+    return res
+      .status(400)
+      .send({ errors: [{ message: 'Unable to file complaints from non-US numbers.' }] });
+  }
+
   logger.info('incomingMessage', incomingMessage);
 
   const browser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']});
