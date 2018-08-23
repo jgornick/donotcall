@@ -1,4 +1,4 @@
-import { get, map, split, flatten, invokeMap, head, reduce, startsWith, keys } from 'lodash';
+import { compact, get, map, split, flatten, invokeMap, head, reduce, startsWith, trim } from 'lodash';
 import typeis from 'type-is';
 import { PhoneNumberUtil, PhoneNumber } from 'google-libphonenumber';
 import axios from 'axios';
@@ -147,19 +147,50 @@ export class IncomingMessage {
 
   public getComplaintNumbers(): Promise<PhoneNumber[]> {
     if (this.numMedia === 0) {
-      return Promise.resolve(map(
-        split(this.body, /[,\n]/g),
-        (number) => PhoneNumberUtil.getInstance().parse(number, 'US')
-      ));
+      return new Promise((resolve, reject) => resolve(map(
+        compact(map(split(this.body, /[,\n]/g), trim)),
+        (number) => {
+          let phoneNumber;
+
+          try {
+            phoneNumber = PhoneNumberUtil.getInstance().parse(number, 'US');
+          } catch (e) {
+            reject(new Error(`Unable to parse phone number "${number}".`));
+          }
+
+          if (phoneNumber.getCountryCode() !== 1) {
+            throw new Error('Unable to file complaints for out of country numbers.');
+          }
+
+          return phoneNumber;
+        }
+      )));
     } else {
       return Promise.all(map(this.getMediaUrls(MIME_TYPE_VCARD), axios.get))
         .then((responses) => map(responses, 'data'))
-        .then((vCardData) => map(vCardData, VCard.parse))
+        .then((vCardData) => map(vCardData, (data) => {
+          try {
+            return VCard.parse(data);
+          } catch (e) {
+            throw new Error(`Unable to parse vCard:\n${data}`);
+          }
+        }))
         .then((vCards) => map(flatten(invokeMap(head(vCards), 'find', 'TEL')), 'value'))
-        .then((vCardTels) => map(
-          vCardTels,
-          (number) => PhoneNumberUtil.getInstance().parse(number, 'US')
-        ));
+        .then((vCardTels) => map(vCardTels, (number) => {
+          let phoneNumber;
+
+          try {
+            phoneNumber = PhoneNumberUtil.getInstance().parse(number, 'US');
+          } catch (e) {
+            throw new Error(`Unable to parse phone number "${number}".`);
+          }
+
+          if (phoneNumber.getCountryCode() !== 1) {
+            throw new Error('Unable to file complaints for out of country numbers.');
+          }
+
+          return phoneNumber;
+        }));
     }
   }
 }

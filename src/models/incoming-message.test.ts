@@ -65,6 +65,10 @@ const MOCK_INCOMING_MESSAGE_JSON_BODY_INVALID = {
   Body: 'INVALID_NUMBER'
 };
 
+const MOCK_INCOMING_MESSAGE_JSON_BODY_NON_US = {
+  Body: '+49 30 202300'
+};
+
 const MOCK_INCOMING_MESSAGE_VCARD = (number: string) => `
 BEGIN:VCARD
 VERSION:3.0
@@ -199,5 +203,34 @@ describe('IncomingMessage', () => {
         )
       );
     });
+
+    it('should return empty array when no numbers provided', async () => {
+      const incomingMessage = new IncomingMessage(MOCK_INCOMING_MESSAGE_JSON);
+      const complaintNumbers = incomingMessage.getComplaintNumbers();
+      expect(complaintNumbers).resolves.toEqual([]);
+    });
+
+    it('should error with invalid phone number format', async () => {
+      const incomingMessage = new IncomingMessage({
+        ...MOCK_INCOMING_MESSAGE_JSON,
+        ...MOCK_INCOMING_MESSAGE_JSON_BODY_INVALID
+      });
+      const complaintNumbers = incomingMessage.getComplaintNumbers();
+      expect(complaintNumbers).rejects.toThrowError(new Error(
+        `Unable to parse phone number "${MOCK_INCOMING_MESSAGE_JSON_BODY_INVALID.Body}".`
+      ));
+    });
+
+    it('should error with valid non-US phone number', async () => {
+      const incomingMessage = new IncomingMessage({
+        ...MOCK_INCOMING_MESSAGE_JSON,
+        ...MOCK_INCOMING_MESSAGE_JSON_BODY_NON_US
+      });
+      const complaintNumbers = incomingMessage.getComplaintNumbers();
+      expect(complaintNumbers).rejects.toThrowError(new Error(
+        'Unable to file complaints for out of country numbers.'
+      ));
+    });
+
   });
 });
