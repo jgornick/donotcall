@@ -11,7 +11,13 @@ import { Complaint } from '../models/complaint';
  * POST /
  */
 export const postApi = async (req: Request, res: Response) => {
-  if (twilio.validateExpressRequest(req, process.env.TWILIO_AUTH_TOKEN) === false) {
+  const isRequestValid = twilio.validateExpressRequest(
+    req,
+    process.env.TWILIO_AUTH_TOKEN,
+    { url: process.env.TWILIO_WEBHOOK_URL }
+  );
+
+  if (isRequestValid === false) {
     return res.sendStatus(400);
   }
 
@@ -38,7 +44,6 @@ export const postApi = async (req: Request, res: Response) => {
   try {
     await Promise.all(map(submissionNumbers, (number) => {
       const complaint = Complaint.fromIncomingMessage(incomingMessage, number);
-      logger.info('complaint', complaint);
       return complaint.submit(browser);
     }));
 

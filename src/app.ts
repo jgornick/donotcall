@@ -6,7 +6,7 @@ import dotenv from 'dotenv';
 
 import * as apiController from './controllers/api';
 
-dotenv.config({ path: '.env' });
+dotenv.config();
 
 const app = express();
 
