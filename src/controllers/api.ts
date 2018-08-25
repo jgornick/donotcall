@@ -6,6 +6,7 @@ import twilio from 'twilio';
 import logger from '../util/logger';
 import { IncomingMessage } from '../models/incoming-message';
 import { Complaint } from '../models/complaint';
+import { rateLimit } from '../util/cache';
 
 /**
  * POST /
@@ -29,6 +30,16 @@ export const postApi = async (req: Request, res: Response) => {
       .status(400)
       .send({ errors: [{ message: 'Unable to file complaints from non-US numbers.' }] });
   }
+
+  if (await rateLimit.get(incomingMessage.from.getNationalNumber()) != null) {
+    res
+      .status(429)
+      .setHeader('Retry-After', 1000 * 60);
+
+    return res.send();
+  }
+
+  await rateLimit.set(incomingMessage.from.getNationalNumber(), +new Date(), 1000 * 60);
 
   logger.info('incomingMessage', incomingMessage);
 

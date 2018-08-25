@@ -33,6 +33,7 @@
     "errorhandler": "^1.5.0",
     "express": "^4.16.3",
     "google-libphonenumber": "^3.1.11",
+    "keyv": "^3.1.0",
     "lodash": "^4.17.10",
     "lusca": "^1.6.1",
     "moment": "^2.22.2",
