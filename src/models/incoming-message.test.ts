@@ -4,12 +4,12 @@ import mockAxios from 'jest-mock-axios';
 
 import { IncomingMessage, MIME_TYPE_VCARD } from './incoming-message';
 
-const MOCK_NUMBERS = [
+export const MOCK_NUMBERS = [
   '+16235371600',
   '+16235371601'
 ];
 
-const MOCK_INCOMING_MESSAGE_JSON = {
+export const MOCK_INCOMING_MESSAGE_JSON = {
   ToCountry: 'US',
   ToState: 'MN',
   SmsMessageSid: '47705864b52881d678fd19c8f6d8cc37',
@@ -31,7 +31,7 @@ const MOCK_INCOMING_MESSAGE_JSON = {
   ApiVersion: '2010-04-01'
 };
 
-const MOCK_INCOMING_MESSAGE_JSON_MEDIA_SINGLE = {
+export const MOCK_INCOMING_MESSAGE_JSON_MEDIA_SINGLE = {
   NumMedia: '1',
   Body: '',
   NumSegments: '1',
@@ -39,7 +39,7 @@ const MOCK_INCOMING_MESSAGE_JSON_MEDIA_SINGLE = {
   MediaUrl0: '://',
 };
 
-const MOCK_INCOMING_MESSAGE_JSON_MEDIA_MULTIPLE = {
+export const MOCK_INCOMING_MESSAGE_JSON_MEDIA_MULTIPLE = {
   NumMedia: '2',
   Body: '',
   NumSegments: '2',
@@ -49,11 +49,15 @@ const MOCK_INCOMING_MESSAGE_JSON_MEDIA_MULTIPLE = {
   MediaUrl1: '://'
 };
 
-const MOCK_INCOMING_MESSAGE_JSON_BODY_SINGLE = {
+export const MOCK_INCOMING_MESSAGE_JSON_FROM_ZIP_90210 = {
+  FromZip: 90210
+};
+
+export const MOCK_INCOMING_MESSAGE_JSON_BODY_SINGLE = {
   Body: MOCK_NUMBERS[0]
 };
 
-const MOCK_INCOMING_MESSAGE_JSON_BODY_MULTIPLE_COMMA = {
+export const MOCK_INCOMING_MESSAGE_JSON_BODY_MULTIPLE_COMMA = {
   Body: MOCK_NUMBERS.join(', ')
 };
 
@@ -61,15 +65,15 @@ const MOCK_INCOMING_MESSAGE_JSON_BODY_MULTIPLE_NEWLINE = {
   Body: MOCK_NUMBERS.join('\n')
 };
 
-const MOCK_INCOMING_MESSAGE_JSON_BODY_INVALID = {
+export const MOCK_INCOMING_MESSAGE_JSON_BODY_INVALID = {
   Body: 'INVALID_NUMBER'
 };
 
-const MOCK_INCOMING_MESSAGE_JSON_BODY_NON_US = {
+export const MOCK_INCOMING_MESSAGE_JSON_BODY_NON_US = {
   Body: '+49 30 202300'
 };
 
-const MOCK_INCOMING_MESSAGE_VCARD = (number: string) => `
+export const MOCK_INCOMING_MESSAGE_VCARD = (number: string) => `
 BEGIN:VCARD
 VERSION:3.0
 PRODID:-//Apple Inc.//iPhone OS 11.4.1//EN
