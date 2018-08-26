@@ -4,8 +4,8 @@ import { Browser, NavigationOptions, Response } from 'puppeteer';
 import axios, { AxiosResponse } from 'axios';
 import { URL } from 'url';
 import { get } from 'lodash';
-import logger from '../util/logger';
 
+import logger from '../util/logger';
 import { IncomingMessage } from './incoming-message';
 
 const DO_NOT_CALL_FORM_URL = 'https://complaints.donotcall.gov/complaint/complaintcheck.aspx';
@@ -13,7 +13,10 @@ const GOOGLE_MAPS_GEOCODE_API_URL = 'https://maps.googleapis.com/maps/api/geocod
 const GOOGLE_MAPS_TIMEZONE_API_URL = 'https://maps.googleapis.com/maps/api/timezone/json';
 
 export class Complaint {
-  static fromIncomingMessage(incomingMessage: IncomingMessage, complaintNumber: PhoneNumber): Complaint {
+  static fromIncomingMessage(
+    incomingMessage: IncomingMessage,
+    complaintNumber: PhoneNumber
+  ): Complaint {
     return new Complaint(incomingMessage, complaintNumber);
   }
 

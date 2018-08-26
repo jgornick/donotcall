@@ -1,8 +1,10 @@
-import { compact, get, map, split, flatten, invokeMap, head, reduce, startsWith, trim } from 'lodash';
-import typeis from 'type-is';
-import { PhoneNumberUtil, PhoneNumber } from 'google-libphonenumber';
 import axios from 'axios';
+import typeis from 'type-is';
 import VCard from 'vcard-js';
+import { compact, get, head, map, reduce, split, startsWith, trim, invoke } from 'lodash';
+import { PhoneNumber, PhoneNumberUtil } from 'google-libphonenumber';
+import logger from '../util/logger';
+
 
 const MEDIA_CONTENT_TYPE_KEY = 'MediaContentType';
 const MEDIA_CONTENT_URL_KEY = 'MediaUrl';
@@ -145,52 +147,44 @@ export class IncomingMessage {
     );
   }
 
-  public getComplaintNumbers(): Promise<PhoneNumber[]> {
+  public getComplaintNumber(): Promise<PhoneNumber> {
     if (this.numMedia === 0) {
-      return new Promise((resolve, reject) => resolve(map(
-        compact(map(split(this.body, /[,\n]/g), trim)),
-        (number) => {
-          let phoneNumber;
+      const number = head(compact(map(split(this.body, /[,\n]/g), trim)));
 
-          try {
-            phoneNumber = PhoneNumberUtil.getInstance().parse(number, 'US');
-          } catch (e) {
-            reject(new Error(`Unable to parse phone number "${number}".`));
-          }
+      try {
+        const phoneNumber = PhoneNumberUtil.getInstance().parse(number, 'US');
 
-          if (phoneNumber.getCountryCode() !== 1) {
-            throw new Error('Unable to file complaints for out of country numbers.');
-          }
-
-          return phoneNumber;
+        if (phoneNumber.getCountryCode() !== 1) {
+          return Promise.reject(new Error('Unable to file complaints for out of country numbers.'));
         }
-      )));
-    } else {
-      return Promise.all(map(this.getMediaUrls(MIME_TYPE_VCARD), axios.get))
-        .then((responses) => map(responses, 'data'))
-        .then((vCardData) => map(vCardData, (data) => {
-          try {
-            return VCard.parse(data);
-          } catch (e) {
-            throw new Error(`Unable to parse vCard:\n${data}`);
-          }
-        }))
-        .then((vCards) => map(flatten(invokeMap(head(vCards), 'find', 'TEL')), 'value'))
-        .then((vCardTels) => map(vCardTels, (number) => {
-          let phoneNumber;
 
+        return Promise.resolve(phoneNumber);
+      } catch (e) {
+        return Promise.reject(new Error(`Unable to parse phone number "${number}".`));
+      }
+    } else {
+      return axios.get(head(this.getMediaUrls(MIME_TYPE_VCARD)))
+        .then((response) => {
           try {
-            phoneNumber = PhoneNumberUtil.getInstance().parse(number, 'US');
+            return VCard.parse(response.data);
+          } catch (e) {
+            throw new Error(`Unable to parse vCard:\n${response.data}`);
+          }
+        })
+        .then((vCard) => get(head(invoke(head(vCard), 'find', 'TEL')), 'value'))
+        .then((number) => {
+          try {
+            const phoneNumber = PhoneNumberUtil.getInstance().parse(number, 'US');
+
+            if (phoneNumber.getCountryCode() !== 1) {
+              throw new Error('Unable to file complaints for out of country numbers.');
+            }
+
+            return phoneNumber;
           } catch (e) {
             throw new Error(`Unable to parse phone number "${number}".`);
           }
-
-          if (phoneNumber.getCountryCode() !== 1) {
-            throw new Error('Unable to file complaints for out of country numbers.');
-          }
-
-          return phoneNumber;
-        }));
+        });
     }
   }
 }

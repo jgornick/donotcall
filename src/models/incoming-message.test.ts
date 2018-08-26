@@ -39,30 +39,12 @@ export const MOCK_INCOMING_MESSAGE_JSON_MEDIA_SINGLE = {
   MediaUrl0: '://',
 };
 
-export const MOCK_INCOMING_MESSAGE_JSON_MEDIA_MULTIPLE = {
-  NumMedia: '2',
-  Body: '',
-  NumSegments: '2',
-  MediaContentType0: 'text/x-vcard',
-  MediaUrl0: '://',
-  MediaContentType1: 'text/x-vcard',
-  MediaUrl1: '://'
-};
-
 export const MOCK_INCOMING_MESSAGE_JSON_FROM_ZIP_90210 = {
   FromZip: 90210
 };
 
 export const MOCK_INCOMING_MESSAGE_JSON_BODY_SINGLE = {
   Body: MOCK_NUMBERS[0]
-};
-
-export const MOCK_INCOMING_MESSAGE_JSON_BODY_MULTIPLE_COMMA = {
-  Body: MOCK_NUMBERS.join(', ')
-};
-
-const MOCK_INCOMING_MESSAGE_JSON_BODY_MULTIPLE_NEWLINE = {
-  Body: MOCK_NUMBERS.join('\n')
 };
 
 export const MOCK_INCOMING_MESSAGE_JSON_BODY_INVALID = {
@@ -125,7 +107,7 @@ describe('IncomingMessage', () => {
         ...MOCK_INCOMING_MESSAGE_JSON,
         ...MOCK_INCOMING_MESSAGE_JSON_MEDIA_SINGLE
       });
-      const complaintNumbers = incomingMessage.getComplaintNumbers();
+      const complaintNumber = incomingMessage.getComplaintNumber();
 
       mockAxios.mockResponse({
         data: MOCK_INCOMING_MESSAGE_VCARD(MOCK_NUMBERS[0]),
@@ -134,84 +116,24 @@ describe('IncomingMessage', () => {
         }
       });
 
-      expect(complaintNumbers).resolves.toEqual([expectedPhoneNumber]);
+      expect(complaintNumber).resolves.toStrictEqual(expectedPhoneNumber);
     });
-
-    // it('should return multiple phone numbers from vCard', async () => {
-    //   const incomingMessage = new IncomingMessage({
-    //     ...MOCK_INCOMING_MESSAGE_JSON,
-    //     ...MOCK_INCOMING_MESSAGE_JSON_MEDIA_MULTIPLE
-    //   });
-    //   const complaintNumbers = incomingMessage.getComplaintNumbers();
-
-    //   mockAxios.mockResponse(
-    //     {
-    //       data: MOCK_INCOMING_MESSAGE_VCARD(MOCK_NUMBERS[0]),
-    //       headers: {
-    //         'Content-Type': MIME_TYPE_VCARD
-    //       }
-    //     },
-    //     mockAxios.lastReqGet()
-    //   );
-
-    //   mockAxios.mockResponse(
-    //     {
-    //       data: MOCK_INCOMING_MESSAGE_VCARD(MOCK_NUMBERS[1]),
-    //       headers: {
-    //         'Content-Type': MIME_TYPE_VCARD
-    //       }
-    //     },
-    //     mockAxios.lastReqGet()
-    //   );
-
-    //   expect(complaintNumbers).resolves.toEqual(
-    //     MOCK_NUMBERS.map(
-    //       (number) => PhoneNumberUtil.getInstance().parse(number, 'US')
-    //     )
-    //   );
-    // });
 
     it('should return a single phone number from body', async () => {
       const incomingMessage = new IncomingMessage({
         ...MOCK_INCOMING_MESSAGE_JSON,
         ...MOCK_INCOMING_MESSAGE_JSON_BODY_SINGLE
       });
-      const complaintNumbers = incomingMessage.getComplaintNumbers();
-      expect(complaintNumbers).resolves.toEqual([
+      const complaintNumber = incomingMessage.getComplaintNumber();
+      expect(complaintNumber).resolves.toEqual(
         PhoneNumberUtil.getInstance().parse(MOCK_NUMBERS[0], 'US')
-      ]);
-    });
-
-    it('should return multiple phone numbers from body with comma', async () => {
-      const incomingMessage = new IncomingMessage({
-        ...MOCK_INCOMING_MESSAGE_JSON,
-        ...MOCK_INCOMING_MESSAGE_JSON_BODY_MULTIPLE_COMMA
-      });
-      const complaintNumbers = incomingMessage.getComplaintNumbers();
-      expect(complaintNumbers).resolves.toEqual(
-        MOCK_NUMBERS.map(
-          (number) => PhoneNumberUtil.getInstance().parse(number, 'US')
-        )
       );
     });
 
-    it('should return multiple phone numbers from body with newline', async () => {
-      const incomingMessage = new IncomingMessage({
-        ...MOCK_INCOMING_MESSAGE_JSON,
-        ...MOCK_INCOMING_MESSAGE_JSON_BODY_MULTIPLE_NEWLINE
-      });
-      const complaintNumbers = incomingMessage.getComplaintNumbers();
-      expect(complaintNumbers).resolves.toEqual(
-        MOCK_NUMBERS.map(
-          (number) => PhoneNumberUtil.getInstance().parse(number, 'US')
-        )
-      );
-    });
-
-    it('should return empty array when no numbers provided', async () => {
+    it('should return null when no numbers provided', async () => {
       const incomingMessage = new IncomingMessage(MOCK_INCOMING_MESSAGE_JSON);
-      const complaintNumbers = incomingMessage.getComplaintNumbers();
-      expect(complaintNumbers).resolves.toEqual([]);
+      const complaintNumber = incomingMessage.getComplaintNumber();
+      expect(complaintNumber).resolves.toBeNull();
     });
 
     it('should error with invalid phone number format', async () => {
@@ -219,8 +141,8 @@ describe('IncomingMessage', () => {
         ...MOCK_INCOMING_MESSAGE_JSON,
         ...MOCK_INCOMING_MESSAGE_JSON_BODY_INVALID
       });
-      const complaintNumbers = incomingMessage.getComplaintNumbers();
-      expect(complaintNumbers).rejects.toThrowError(new Error(
+      const complaintNumber = incomingMessage.getComplaintNumber();
+      expect(complaintNumber).rejects.toThrowError(new Error(
         `Unable to parse phone number "${MOCK_INCOMING_MESSAGE_JSON_BODY_INVALID.Body}".`
       ));
     });
@@ -230,8 +152,8 @@ describe('IncomingMessage', () => {
         ...MOCK_INCOMING_MESSAGE_JSON,
         ...MOCK_INCOMING_MESSAGE_JSON_BODY_NON_US
       });
-      const complaintNumbers = incomingMessage.getComplaintNumbers();
-      expect(complaintNumbers).rejects.toThrowError(new Error(
+      const complaintNumber = incomingMessage.getComplaintNumber();
+      expect(complaintNumber).rejects.toThrowError(new Error(
         'Unable to file complaints for out of country numbers.'
       ));
     });

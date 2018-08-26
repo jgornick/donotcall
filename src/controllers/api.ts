@@ -22,50 +22,51 @@ export const postApi = async (req: Request, res: Response) => {
     return res.sendStatus(400);
   }
 
-  logger.info('REQ', req.body);
+  // @ts-ignore
+  const messageResponse = new twilio.twiml.MessagingResponse();
+
   const incomingMessage = IncomingMessage.fromJSON(req.body);
+  res.status(200).setHeader('Content-Type', 'text/xml');
 
-  if (incomingMessage.from.getCountryCode() !== 1) {
-    return res
-      .status(400)
-      .send({ errors: [{ message: 'Unable to file complaints from non-US numbers.' }] });
-  }
+  logger.info('incomingMessage: %s', JSON.stringify(incomingMessage));
 
+  // Prevent requests from the same number every 60 seconds.
   if (await rateLimit.get(incomingMessage.from.getNationalNumber()) != null) {
     res
       .status(429)
       .setHeader('Retry-After', 1000 * 60);
 
-    return res.send();
+    return res.end();
   }
 
+  // Set a value for the from number and TTL it for 60 seconds.
   await rateLimit.set(incomingMessage.from.getNationalNumber(), +new Date(), 1000 * 60);
 
-  logger.info('incomingMessage', incomingMessage);
-
-  const browser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']});
-
-  const submissionNumbers = await incomingMessage.getComplaintNumbers();
-
-  logger.info('submissionNumbers', submissionNumbers);
-
-  // @ts-ignore
-  const messageResponse = new twilio.twiml.MessagingResponse();
-
-  try {
-    await Promise.all(map(submissionNumbers, (number) => {
-      const complaint = Complaint.fromIncomingMessage(incomingMessage, number);
-      return complaint.submit(browser);
-    }));
-
-    messageResponse.message('Thank you!');
-  } catch (e) {
-    logger.error(e);
-    messageResponse.message('Something went wrong while submitting the complaint. Please try again.');
+  if (incomingMessage.from.getCountryCode() !== 1) {
+    messageResponse.message('Unable to file complaints from non-US numbers.');
+    return res.end(messageResponse.toString());
   }
 
-  await browser.close();
+  try {
+    const browser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']});
 
-  res.writeHead(200, { 'Content-Type': 'text/xml' });
-  res.end(messageResponse.toString());
+    const complaintNumber = await incomingMessage.getComplaintNumber();
+
+    if (complaintNumber == null) {
+      messageResponse.message('You must provide a phone number to file a complaint.');
+    } else {
+      const complaint = Complaint.fromIncomingMessage(incomingMessage, complaintNumber);
+      const localDate = await complaint.localDate;
+
+      await complaint.submit(browser);
+      await browser.close();
+
+      messageResponse.message(`Complaint filed for "${complaintNumber}" at ${localDate.format('LLL')}.`);
+    }
+  } catch (e) {
+    logger.error(e);
+    messageResponse.message(e.message);
+  }
+
+  return res.end(messageResponse.toString());
 };
