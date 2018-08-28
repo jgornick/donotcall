@@ -1,9 +1,9 @@
 import moment, { Moment } from 'moment-timezone';
 import { PhoneNumber } from 'google-libphonenumber';
-import { Browser, NavigationOptions, Response } from 'puppeteer';
+import { Browser, NavigationOptions, Page } from 'puppeteer';
 import axios, { AxiosResponse } from 'axios';
 import { URL } from 'url';
-import { get } from 'lodash';
+import { get, trim } from 'lodash';
 
 import logger from '../util/logger';
 import { IncomingMessage } from './incoming-message';
@@ -42,8 +42,8 @@ export class Complaint {
 
     return axios.get(geocodeUrl.toString())
       .then((response: AxiosResponse) => {
-        logger.debug('geocode response', response.data);
         location = get(response.data, 'results.0.geometry.location');
+        logger.debug(`location: ${location}`);
 
         if (location == null) {
           logger.error(`Unable to load location for "${this.fromZip}".`);
@@ -65,8 +65,8 @@ export class Complaint {
           return this.utcDate;
         }
 
-        logger.debug('timezone response', response.data);
         const timezoneId = get(response.data, 'timeZoneId');
+        logger.debug(`timezoneId: ${timezoneId}`);
 
         if (timezoneId == null) {
           logger.error(`Unable to load time zone for location "${location.lat},${location.lng}".`);
@@ -74,7 +74,7 @@ export class Complaint {
           return this.utcDate;
         }
 
-        this._localDate = moment.tz(this.utcDate.unix(), timezoneId);
+        this._localDate = moment.tz(this.utcDate.unix() * 1000, timezoneId);
 
         return this._localDate;
       });
@@ -93,24 +93,45 @@ export class Complaint {
   }
 
   public async submit(browser: Browser) {
-    let waitForNavigation = Promise.resolve<Response>(undefined);
-    const waitForNavigationOptions: NavigationOptions = {
-      waitUntil: ['load', 'domcontentloaded', 'networkidle0', 'networkidle2']
-    };
     const page = await browser.newPage();
-    const localDate = await this.localDate;
+    const waitForNavigationOptions: NavigationOptions = {
+      timeout: 1000 * 10,
+      waitUntil: ['networkidle2']
+    };
 
-    logger.debug(`localDate: ${localDate.toISOString()}`);
+    await page.setViewport({ width: 1440, height: 900 });
 
+    await this.loadComplaintPage(page, waitForNavigationOptions);
+    await this.startComplaint(page, waitForNavigationOptions);
+    await this.submitComplaintStep1(page, waitForNavigationOptions);
+    await this.submitComplaintStep2(page, waitForNavigationOptions);
+    await this.validateComplaintStep3(page);
+
+    return await page.close();
+  }
+
+  private async loadComplaintPage(page: Page, waitForNavigationOptions: NavigationOptions) {
     logger.debug(`Loading ${DO_NOT_CALL_FORM_URL}`);
     await page.goto(DO_NOT_CALL_FORM_URL, waitForNavigationOptions);
     logger.debug(`Done loading ${DO_NOT_CALL_FORM_URL}`);
+  }
 
-    logger.debug('Clicking submit on first step...');
-    waitForNavigation = page.waitForNavigation(waitForNavigationOptions);
-    await page.click('input[type="submit"]');
+  private async startComplaint(page: Page, waitForNavigationOptions: NavigationOptions) {
+    logger.debug('Clicking submit on start step...');
+    const waitForNavigation = page.waitForNavigation(waitForNavigationOptions);
+    await page.click('#ContinueButton');
     await waitForNavigation;
-    logger.debug('Done clicking submit on first step.');
+    logger.debug('Done clicking submit on start step.');
+  }
+
+  private async submitComplaintStep1(page: Page, waitForNavigationOptions: NavigationOptions) {
+    const error = await this.getError(page);
+    if (error != null) {
+      throw new Error(error);
+    }
+
+    const localDate = await this.localDate;
+    logger.debug(`localDate: ${localDate.toISOString()}`);
 
     await page.type('#PhoneTextBox', String(this.fromNumber.getNationalNumber()));
     await page.type('#DateOfCallTextBox', localDate.format('MM/DD/YYYY'));
@@ -118,11 +139,18 @@ export class Complaint {
     await page.select('#ddlMinutes', localDate.format('mm'));
     await page.click('#PhoneCallRadioButton');
 
-    logger.debug('Clicking submit on second step...');
-    waitForNavigation = page.waitForNavigation(waitForNavigationOptions);
-    await page.click('input[type="submit"]');
+    logger.debug('Clicking submit on step 1...');
+    const waitForNavigation = page.waitForNavigation(waitForNavigationOptions);
+    await page.click('#StepOneContinueButton');
     await waitForNavigation;
-    logger.debug('Done clicking submit on second step.');
+    logger.debug('Done clicking submit on step 1.');
+  }
+
+  private async submitComplaintStep2(page: Page, waitForNavigationOptions: NavigationOptions) {
+    const error = await this.getError(page);
+    if (error != null) {
+      throw new Error(error);
+    }
 
     await page.type('#CallerPhoneNumberTextBox', String(this.number.getNationalNumber()));
     await page.type('#CityTextBox', this.fromCity);
@@ -130,11 +158,18 @@ export class Complaint {
     await page.type('#ZipCodeTextBox', this.fromZip);
     await page.type('#CommentTextBox', 'Submitted via donotcall.tel');
 
-    logger.debug('Clicking submit on third step...');
-    waitForNavigation = page.waitForNavigation(waitForNavigationOptions);
-    await page.click('input[type="submit"]');
+    logger.debug('Clicking submit on step 2...');
+    const waitForNavigation = page.waitForNavigation(waitForNavigationOptions);
+    await page.click('#StepTwoSubmitButton');
     await waitForNavigation;
-    logger.debug('Done clicking submit on third step.');
+    logger.debug('Done clicking submit on step 2.');
+  }
+
+  private async validateComplaintStep3(page: Page) {
+    const error = await this.getError(page);
+    if (error != null) {
+      throw new Error(error);
+    }
 
     if (await page.$('#StepTwoAcceptedPanel') === null) {
       let pdfPath  = `/var/log/donotcall`;
@@ -146,7 +181,22 @@ export class Complaint {
       await page.close();
       throw new Error('Unable to confirm submission!');
     }
+  }
 
-    return await page.close();
+  private async getError(page: Page) {
+    const errorMessage = await page.evaluate(() => {
+      const errorMessageNode = document.querySelector('#ErrorMsg');
+      if (errorMessageNode == null) {
+        return null;
+      }
+
+      return errorMessageNode.textContent;
+    });
+
+    if (trim(errorMessage) === '') {
+      return null;
+    }
+
+    return errorMessage;
   }
 }
