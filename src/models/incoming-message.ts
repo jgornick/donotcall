@@ -3,7 +3,6 @@ import typeis from 'type-is';
 import VCard from 'vcard-js';
 import { compact, get, head, map, reduce, split, startsWith, trim, invoke } from 'lodash';
 import { PhoneNumber, PhoneNumberUtil } from 'google-libphonenumber';
-import logger from '../util/logger';
 
 
 const MEDIA_CONTENT_TYPE_KEY = 'MediaContentType';
