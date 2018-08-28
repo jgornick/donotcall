@@ -1,5 +1,4 @@
 import { Response, Request } from 'express';
-import { map } from 'lodash';
 import puppeteer from 'puppeteer';
 import twilio from 'twilio';
 
@@ -15,6 +14,7 @@ export const postApi = async (req: Request, res: Response) => {
   const isRequestValid = twilio.validateExpressRequest(
     req,
     process.env.TWILIO_AUTH_TOKEN,
+    // @ts-ignore - https://github.com/twilio/twilio-node/issues/376
     { url: process.env.TWILIO_WEBHOOK_URL }
   );
 
@@ -47,9 +47,16 @@ export const postApi = async (req: Request, res: Response) => {
     return res.end(messageResponse.toString());
   }
 
-  try {
-    const browser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']});
 
+  // @ts-ignore
+  const browserFetcher = puppeteer.createBrowserFetcher();
+  const revisionInfo = await browserFetcher.download('584349');
+  const browser = await puppeteer.launch({
+    executablePath: revisionInfo.executablePath,
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
+  });
+
+  try {
     const complaintNumber = await incomingMessage.getComplaintNumber();
 
     if (complaintNumber == null) {
@@ -59,14 +66,14 @@ export const postApi = async (req: Request, res: Response) => {
       const localDate = await complaint.localDate;
 
       await complaint.submit(browser);
-      await browser.close();
 
-      messageResponse.message(`Complaint filed for "${complaintNumber}" at ${localDate.format('LLL')}.`);
+      messageResponse.message(`Complaint filed for "${complaintNumber.getNationalNumber()}" at ${localDate.format('LLL')}.`);
     }
   } catch (e) {
     logger.error(e);
     messageResponse.message(e.message);
   }
 
+  await browser.close();
   return res.end(messageResponse.toString());
 };
