@@ -26,7 +26,7 @@ If that doesn't work, you can manually add the following phone number to your co
 
 There are multiple ways to file complaints for a phone number:
 
-* Send text message with single or multiple phone numbers provided (e.g. `612-123-1234` or `612-123-1234, 612-123-1235, 612-123-1236`).
+* Send text message with a single number (e.g. `612-123-1234`).
 * Share contact (i.e. vCard) via text message.
 
 **Note: The complaints are filed on behalf your phone number when sending the text message.**
