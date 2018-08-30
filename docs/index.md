@@ -29,7 +29,7 @@ There are multiple ways to file complaints for a phone number:
 * Send text message with a single number (e.g. `612-123-1234`).
 * Share contact (i.e. vCard) via text message.
 
-**Note: The complaints are filed on behalf your phone number when sending the text message.**
+The complaints are filed on behalf of your phone number when sending the text message. The date and time used to file the complaint is also based on your phone number and it's location. It's recommended to share the complaint phone number as soon as possible so the date and time filed with the complaint is close to when the actual call was received.
 
 ### Share contact via text message
 
