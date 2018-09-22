@@ -6,6 +6,7 @@ import logger from '../util/logger';
 import { IncomingMessage } from '../models/incoming-message';
 import { Complaint } from '../models/complaint';
 import { rateLimit } from '../util/cache';
+import { trackEvent } from '../util/analytics';
 
 /**
  * POST /
@@ -66,6 +67,12 @@ export const postApi = async (req: Request, res: Response) => {
       const localDate = await complaint.localDate;
 
       await complaint.submit(browser);
+      await trackEvent({
+        ec: 'complaint',
+        ea: 'file',
+        el: String(complaintNumber.getNationalNumber()),
+        ev: incomingMessage.from.getNationalNumber()
+      });
 
       messageResponse.message(`Complaint filed for "${complaintNumber.getNationalNumber()}" at ${localDate.format('LLL')}.`);
     }

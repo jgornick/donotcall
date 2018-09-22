@@ -2,11 +2,11 @@ import express from 'express';
 import compression from 'compression';
 import bodyParser from 'body-parser';
 import lusca from 'lusca';
+
 import dotenv from 'dotenv';
+dotenv.config();
 
 import * as apiController from './controllers/api';
-
-dotenv.config();
 
 const app = express();
 
