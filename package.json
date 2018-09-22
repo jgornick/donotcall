@@ -1,6 +1,6 @@
 {
   "name": "donotcall",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "File complaints to National Do Not Call Registry via text messages.",
   "homepage": "https://donotcall.tel",
   "repository": {
